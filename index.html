@@ -173,6 +173,13 @@
   .riga { display: flex; gap: 8px; align-items: flex-start; line-height: 32px; }
   /* Fatti: in fondo alla pagina, testo grigio e senza evidenziatore */
   .riga.done { opacity: .55; }
+  .riga-nuova { line-height: 32px; height: 32px; }
+  .riga-nuova input {
+    width: 100%; height: 32px; padding: 0; margin: 0; border: 0; border-radius: 0; background: transparent;
+    font-family: var(--body); font-size: 1rem; line-height: 32px; color: var(--ink);
+  }
+  .riga-nuova input:focus { outline: none; border: 0; }
+  .riga-nuova input::placeholder { color: var(--muted); font-style: italic; opacity: .7; }
   .riga.done .evidenzia { background: none; color: var(--muted); }
   .riga.done .meta { font-size: 1.05rem; }
   .check {
@@ -493,6 +500,30 @@ function blocco(iso, lato) {
   const righe = document.createElement('ul');
   righe.className = 'righe';
   righe.append(...impegni.filter(i => i.data === iso).sort(ordina).map(carta));
+
+  // Riga di scrittura: tocca la pagina, scrivi e premi Invio per aggiungere l'impegno a questo giorno.
+  const nuova = document.createElement('li');
+  nuova.className = 'riga-nuova';
+  const campo = document.createElement('input');
+  campo.type = 'text';
+  campo.maxLength = 120;
+  campo.autocomplete = 'off';
+  campo.dataset.iso = iso;
+  campo.placeholder = 'Scrivi un impegno e premi Invio';
+  campo.setAttribute('aria-label', `Nuovo impegno per ${etichetta}`);
+  campo.onkeydown = e => {
+    if (e.key !== 'Enter') return;
+    e.preventDefault();
+    const titolo = campo.value.trim();
+    if (!titolo) return;
+    impegni.push({ id: nuovoId(), done: false, titolo, data: iso, ora: '', priorita: 'media', note: '', colore: null, updatedAt: Date.now() });
+    giorno = iso;
+    salva();
+    render();
+    document.querySelector(`input[data-iso="${iso}"]`)?.focus();
+  };
+  nuova.append(campo);
+  righe.append(nuova);
 
   sezione.append(linguetta, intest, righe);
   return sezione;
