@@ -257,10 +257,10 @@
 
   /* Telefono: una pagina sotto l'altra, linguette in riga */
   @media (max-width: 720px) {
-    .book { grid-template-columns: 1fr; padding: 0 14px; }
-    .dorso { display: none; }
-    .page { min-height: 0; padding-top: 58px; }
-    .tab.sx, .tab.dx { top: 10px; left: 14px; right: auto; width: auto; flex-direction: row; gap: 6px; padding: 4px 10px; border-radius: 8px; }
+    .book { grid-template-columns: 1fr 10px 1fr; padding: 0 10px; }
+    .dorso { display: block; }
+    .page { min-height: 0; padding: 12px 10px 22px; }
+    .tab.sx, .tab.dx { position: static; display: inline-flex; flex-direction: row; gap: 4px; width: auto; padding: 3px 7px; border-radius: 6px; margin-bottom: 6px; }
     .tab span { font-size: .8rem; }
     .tab b { font-size: 1rem; }
     .blocco { margin-bottom: 20px; }

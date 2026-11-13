@@ -1,6 +1,6 @@
 // Cache minimale: l'app funziona anche senza connessione.
 // Se modifichi index.html, aumenta la versione di CACHE per forzare l'aggiornamento.
-const CACHE = 'agenda-v10';
+const CACHE = 'agenda-v11';
 const FILES = ['./', './index.html', './manifest.webmanifest', './icon.svg'];
 
 self.addEventListener('install', e => {
