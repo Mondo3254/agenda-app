@@ -173,6 +173,15 @@
   .riga { display: flex; gap: 8px; align-items: flex-start; line-height: 32px; }
   /* Fatti: in fondo alla pagina, testo grigio e senza evidenziatore */
   .riga.done { opacity: .55; }
+  .punti { display: flex; flex-direction: column; gap: 6px; padding-top: 7px; flex: 0 0 auto; }
+  .punto {
+    width: 16px; height: 16px; padding: 0; border-radius: 50%; cursor: pointer;
+    border: 2px solid transparent; opacity: .45;
+  }
+  .punto.on { opacity: 1; border-color: var(--ink); }
+  .punto-alta { background: #ff6b6b; }
+  .punto-media { background: #ffd54a; }
+  .punto-bassa { background: #6fd18a; }
   .riga-nuova { line-height: 32px; height: 32px; }
   .riga-nuova input {
     width: 100%; height: 32px; padding: 0; margin: 0; border: 0; border-radius: 0; background: transparent;
@@ -603,7 +612,22 @@ function carta(it) {
     testo.append(note);
   }
 
-  li.append(check, testo);
+  // Tre pallini: tocca per scegliere la priorità (rosso, giallo, verde).
+  const punti = document.createElement('div');
+  punti.className = 'punti';
+  for (const p of ['alta', 'media', 'bassa']) {
+    const pallino = document.createElement('button');
+    pallino.className = `punto punto-${p}${it.priorita === p ? ' on' : ''}`;
+    pallino.setAttribute('aria-label', `Priorità ${PRIORITA[p]}`);
+    pallino.onclick = () => {
+      it.priorita = p;
+      it.updatedAt = Date.now();
+      salva(); render();
+    };
+    punti.append(pallino);
+  }
+
+  li.append(check, testo, punti);
   return li;
 }
 

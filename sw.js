@@ -1,6 +1,6 @@
 // Cache minimale: l'app funziona anche senza connessione.
 // Se modifichi index.html, aumenta la versione di CACHE per forzare l'aggiornamento.
-const CACHE = 'agenda-v14';
+const CACHE = 'agenda-v15';
 const FILES = ['./', './index.html', './manifest.webmanifest', './icon.svg'];
 
 // Si attiva subito, senza aspettare che si chiudano le schede vecchie.
