@@ -129,7 +129,7 @@
     display: grid; grid-template-columns: 1fr 22px 1fr; align-items: stretch;
   }
   .book.singola { grid-template-columns: 1fr; max-width: 680px; }
-  .book.singola .dorso, .book.singola .destra { display: none; }
+  .book.singola .dorso, .book.singola #destra { display: none; }
   .page {
     position: relative; min-height: 520px; margin: 0; padding: 14px 18px 40px;
     background-color: var(--paper); border-radius: 14px;
@@ -264,6 +264,9 @@
     .tab span { font-size: .8rem; }
     .tab b { font-size: 1rem; }
     .blocco { margin-bottom: 20px; }
+    /* Il pulsante + sta sopra la barra in basso, così non copre A+ */
+    body .fab { bottom: 100px; right: 12px; width: 52px; height: 52px; font-size: 1.7rem; }
+    body footer { padding-bottom: calc(6px + env(safe-area-inset-bottom)); }
   }
 
   .fab {
