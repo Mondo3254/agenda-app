@@ -1,0 +1,747 @@
+<!doctype html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#3a86d6">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Agenda">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Caveat:wght@500;700&family=Lora:ital,wght@0,400;0,600;0,700;1,400&family=Playfair+Display:ital,wght@0,600;1,500;1,600&display=swap" rel="stylesheet">
+<title>Agenda</title>
+<style>
+  /* Agenda virtuale: due pagine con rilegatura a spirale, linguette dei giorni,
+     evidenziatori per la priorità e sfondo di cielo. */
+  :root {
+    --paper: #fffdf8; --ink: #2a2a2e; --muted: #6f7480; --rule: #d6e4f0; --edge: #cfd8e3;
+    --accent: #2f5fa7; --tab: #dfe9f5; --tab-on: #e5484d; --spirale: #1d1d22;
+    --barra: rgba(255, 255, 255, .92); --sommario: #ffffff;
+    --sfondo:
+      radial-gradient(ellipse 120px 36px at 16% 12%, rgba(255,255,255,.95) 0 60%, transparent 62%),
+      radial-gradient(ellipse 170px 46px at 80% 26%, rgba(255,255,255,.9) 0 60%, transparent 62%),
+      radial-gradient(ellipse 130px 40px at 34% 66%, rgba(255,255,255,.85) 0 60%, transparent 62%),
+      linear-gradient(180deg, #3a86d6 0%, #7cbbeb 42%, #bfe3f7 74%, #d9f1d0 100%);
+    --prato: linear-gradient(180deg, #7ccc55, #3d8f2e);
+    --hl-alta: rgba(255, 107, 107, .55); --hl-media: rgba(255, 213, 74, .6); --hl-bassa: rgba(111, 209, 138, .55);
+    --hl-verde: rgba(111, 209, 138, .55); --hl-blu: rgba(110, 170, 255, .5);
+    --hl-arancione: rgba(255, 160, 70, .6); --hl-rosso: rgba(255, 107, 107, .55);
+    --display: "Playfair Display", Georgia, serif;
+    --body: "Lora", Georgia, serif;
+    --hand: "Caveat", "Segoe Print", cursive;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --paper: #24272f; --ink: #ece9e1; --muted: #a0a6b3; --rule: #353c4b; --edge: #3a4150;
+      --accent: #9fc0f0; --tab: #2f3a4e; --spirale: #0c0d10;
+    }
+  }
+  /* Temi: ogni tema è un'agenda diversa. Il tema Cielo è quello base (:root). */
+  :root[data-tema="cisl"] {
+    --sfondo:
+      url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='44' height='44'><path d='M10 26 L22 14 L34 26' fill='none' stroke='%23ffffff' stroke-opacity='.16' stroke-width='3' stroke-linecap='round'/><circle cx='22' cy='36' r='2.5' fill='%23ffffff' fill-opacity='.14'/></svg>"),
+      linear-gradient(160deg, #00522f 0%, #006b3f 60%, #1a8a57 100%);
+    --prato: linear-gradient(180deg, #a8122f, #5e0a17);
+    --barra: rgba(248, 251, 255, .94); --sommario: #ffffff;
+    --paper: #fbfcff; --card: #ffffff; --ink: #14213d; --muted: #5b6b85; --rule: #d5e2f2; --edge: #c3d3e8;
+    --accent: #00522f; --tab: #dcefe4; --tab-on: #c8102e;
+  }
+  :root[data-tema="astronomia"] {
+    --sfondo:
+      radial-gradient(1px 1px at 12% 18%, #fff, transparent),
+      radial-gradient(1px 1px at 46% 8%, #fff, transparent),
+      radial-gradient(1.5px 1.5px at 72% 26%, #ffe9a8, transparent),
+      radial-gradient(1px 1px at 88% 58%, #fff, transparent),
+      radial-gradient(1px 1px at 28% 64%, #fff, transparent),
+      radial-gradient(1.5px 1.5px at 60% 82%, #cfe3ff, transparent),
+      linear-gradient(180deg, #05071a 0%, #141a48 60%, #2a2360 100%);
+    --prato: linear-gradient(180deg, #1a1d3a, #0a0c20);
+    --barra: rgba(20, 24, 60, .92); --sommario: #ffd166; --spirale: #c9d0ff;
+    --paper: #1c2140; --card: #232a52; --ink: #eef0ff; --muted: #9aa3d6; --rule: #2c3366; --edge: #343c78;
+    --accent: #ffd166; --tab: #2b3470; --tab-on: #ff9f1c;
+  }
+  :root[data-tema="borsa"] {
+    --sfondo:
+      repeating-linear-gradient(90deg, rgba(255,255,255,.05) 0 1px, transparent 1px 60px),
+      linear-gradient(180deg, #0b2e1f 0%, #145a3e 55%, #1f7a55 100%);
+    --prato: linear-gradient(180deg, #c9a227, #8c6d12);
+    --barra: rgba(246, 252, 248, .94); --sommario: #e9f7ee;
+    --paper: #f7fbf6; --card: #ffffff; --ink: #10261c; --muted: #4d6b5c; --rule: #d4e8dc; --edge: #b9d6c6;
+    --accent: #0d5c3f; --tab: #dcefe4; --tab-on: #0d5c3f;
+  }
+  :root[data-tema="casa"] {
+    --sfondo:
+      radial-gradient(circle, rgba(160, 82, 45, .14) 2px, transparent 3px) 0 0 / 28px 28px,
+      linear-gradient(180deg, #ffe7d1 0%, #ffd0c2 45%, #f7b7b0 100%);
+    --prato: linear-gradient(180deg, #c9825a, #9b5c3a);
+    --barra: rgba(255, 250, 244, .94); --sommario: #4a2e22;
+    --paper: #fffaf4; --card: #ffffff; --ink: #4a2e22; --muted: #8c6a5a; --rule: #f0dccd; --edge: #e8cdbd;
+    --accent: #a0522d; --tab: #fbe3d3; --tab-on: #c0623c;
+  }
+  footer select {
+    font-family: var(--body); font-size: .8rem; color: var(--ink); background: var(--barra);
+    border: 1px solid var(--edge); border-radius: 6px; padding: 6px;
+  }
+
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; color: var(--ink); font-family: var(--body); min-height: 100vh; padding-bottom: 110px;
+    background: var(--sfondo);
+    background-attachment: fixed;
+  }
+  /* Prato in basso */
+  body::after {
+    content: ""; position: fixed; left: 0; right: 0; bottom: 0; height: 52px; z-index: 0; pointer-events: none;
+    background: var(--prato);
+  }
+
+  /* Barra superiore */
+  .top {
+    position: sticky; top: 0; z-index: 3; max-width: 980px; margin: 0 auto; padding: 10px 14px;
+    display: flex; align-items: center; justify-content: space-between; gap: 10px;
+    background: var(--barra); backdrop-filter: blur(6px);
+    border-radius: 0 0 16px 16px; box-shadow: 0 4px 14px rgba(20,50,90,.25);
+  }
+  .centro { text-align: center; flex: 1; min-width: 0; }
+  #dateLabel { font-weight: 700; font-size: 1.05rem; color: var(--accent); text-transform: capitalize; }
+  #datePicker { border: 0; background: transparent; color: var(--muted); font-family: var(--body); font-size: .8rem; }
+  .vistas { display: flex; flex-wrap: wrap; justify-content: center; gap: 2px; }
+  .icon-btn {
+    width: 40px; height: 40px; border-radius: 12px; border: 1px solid var(--edge); background: var(--barra);
+    color: var(--accent); font-family: var(--body); font-size: 1.4rem; line-height: 1; cursor: pointer;
+  }
+  .link {
+    border: 0; background: none; color: var(--ink); cursor: pointer;
+    font-family: var(--body); font-size: .78rem; padding: 4px 7px; border-radius: 6px;
+  }
+  .link.vista.on { background: var(--tab); color: var(--accent); font-weight: 700; }
+
+  #summary {
+    max-width: 980px; margin: 12px auto 0; padding: 0 18px; min-height: 1.4em;
+    font-family: var(--hand); font-size: 1.6rem; color: var(--sommario); text-shadow: 0 1px 3px rgba(0,0,0,.35);
+  }
+
+  /* Libro: due pagine e rilegatura al centro */
+  .book {
+    position: relative; max-width: 980px; margin: 10px auto 0; padding: 0 44px; touch-action: pan-y;
+    display: grid; grid-template-columns: 1fr 22px 1fr; align-items: stretch;
+  }
+  .book.singola { grid-template-columns: 1fr; max-width: 680px; }
+  .book.singola .dorso, .book.singola .destra { display: none; }
+  .page {
+    position: relative; min-height: 520px; margin: 0; padding: 14px 18px 40px;
+    background-color: var(--paper); border-radius: 14px;
+    background-image: repeating-linear-gradient(to bottom, transparent 0 31px, var(--rule) 31px 32px);
+    background-attachment: local; box-shadow: 0 12px 26px rgba(20,50,90,.28);
+  }
+  /* Spirale */
+  .dorso {
+    background: radial-gradient(ellipse 9px 6px at 50% 50%, transparent 3px, var(--spirale) 4px, var(--spirale) 5px, transparent 6px) 50% 0 / 22px 20px repeat-y;
+  }
+  /* Ombra che segue la piega di pagina */
+  .book::after {
+    content: ""; position: absolute; inset: 0; border-radius: 14px; pointer-events: none; opacity: 0;
+    background: linear-gradient(90deg, rgba(20, 30, 50, .4), transparent 80%);
+  }
+  .book.pagina-esce-indietro::after, .book.pagina-entra-indietro::after {
+    background: linear-gradient(270deg, rgba(20, 30, 50, .4), transparent 80%);
+  }
+
+  /* Un giorno sulla pagina */
+  .blocco { position: relative; margin-bottom: 30px; }
+  .intest {
+    margin: 0; font-family: var(--display); font-style: italic; font-weight: 600; font-size: 1.15rem;
+    line-height: 32px; color: var(--accent); text-transform: capitalize; cursor: pointer;
+  }
+  /* Linguetta del giorno sul bordo della pagina */
+  .tab {
+    position: absolute; top: 40px; z-index: 2; width: 54px; padding: 6px 0;
+    display: flex; flex-direction: column; align-items: center; line-height: 1.1;
+    border: 0; background: var(--tab); color: var(--accent); cursor: pointer; font-family: var(--body);
+    box-shadow: 0 3px 6px rgba(20,50,90,.25);
+  }
+  .tab span { font-size: .72rem; text-transform: uppercase; letter-spacing: .05em; }
+  .tab b { font-size: 1.2rem; }
+  .tab.sx { left: -44px; border-radius: 10px 0 0 10px; }
+  .tab.dx { right: -44px; border-radius: 0 10px 10px 0; }
+  .tab.attiva { background: var(--tab-on); color: #fff; }
+
+  /* Righe di testo: ognuna occupa una riga del foglio */
+  .righe { list-style: none; margin: 0; padding: 0; }
+  .riga { display: flex; gap: 8px; align-items: flex-start; line-height: 32px; }
+  /* Fatti: in fondo alla pagina, testo grigio e senza evidenziatore */
+  .riga.done { opacity: .55; }
+  .riga.done .evidenzia { background: none; color: var(--muted); }
+  .riga.done .meta { font-size: 1.05rem; }
+  .check {
+    flex: 0 0 22px; width: 22px; height: 22px; margin-top: 5px; padding: 0; cursor: pointer;
+    border: 1.5px solid var(--ink); border-radius: 3px; background: transparent; color: var(--ink);
+    display: flex; align-items: center; justify-content: center; font-size: 1rem; line-height: 1;
+  }
+  .riga.done .check { border-color: transparent; background: none; color: var(--muted); font-size: 1.15rem; }
+  .main { flex: 1; min-width: 0; cursor: pointer; }
+  .evidenzia {
+    padding: 0 3px; color: var(--ink); font-size: 1rem;
+    background: linear-gradient(transparent 12%, var(--hl) 12% 88%, transparent 88%);
+    -webkit-box-decoration-break: clone; box-decoration-break: clone;
+  }
+  .riga.p-alta .evidenzia { --hl: var(--hl-alta); }
+  .riga.p-media .evidenzia { --hl: var(--hl-media); }
+  .riga.p-bassa .evidenzia { --hl: var(--hl-bassa); }
+  /* Colore scelto a mano: vince sulla priorità */
+  .riga.hl-verde .evidenzia { --hl: var(--hl-verde); }
+  .riga.hl-blu .evidenzia { --hl: var(--hl-blu); }
+  .riga.hl-arancione .evidenzia { --hl: var(--hl-arancione); }
+  .riga.hl-rosso .evidenzia { --hl: var(--hl-rosso); }
+  .colori { display: flex; flex-wrap: wrap; gap: 8px; }
+  .colore {
+    display: flex; align-items: center; gap: 6px; padding: 6px 10px; cursor: pointer;
+    border: 1.5px solid var(--edge); border-radius: 8px; color: var(--ink); font-size: .9rem;
+  }
+  .colore input { width: auto; margin: 0; border: 0; padding: 0; }
+  .colore:has(input:checked) { border-color: var(--accent); }
+  .colore i { width: 16px; height: 16px; border-radius: 4px; display: inline-block; }
+  .sw-verde { background: #6fd18a; }
+  .sw-blu { background: #6eaaff; }
+  .sw-arancione { background: #ffa046; }
+  .sw-rosso { background: #ff6b6b; }
+  .meta { font-family: var(--hand); font-size: 1.25rem; color: var(--accent); }
+  .note { font-style: italic; color: var(--muted); font-size: .95rem; white-space: pre-wrap; word-wrap: break-word; }
+
+  /* Girata di pagina: il libro si piega sul dorso, poi arriva la pagina successiva */
+  @keyframes ombra-in { from { opacity: 0; } to { opacity: 1; } }
+  @keyframes ombra-out { from { opacity: 1; } to { opacity: 0; } }
+  @keyframes pagina-esce-avanti {
+    from { transform: none; filter: brightness(1); }
+    to { transform: perspective(1400px) rotateY(-70deg); filter: brightness(.8); }
+  }
+  @keyframes pagina-entra-avanti {
+    from { transform: perspective(1400px) rotateY(70deg); filter: brightness(.8); }
+    to { transform: none; filter: brightness(1); }
+  }
+  @keyframes pagina-esce-indietro {
+    from { transform: none; filter: brightness(1); }
+    to { transform: perspective(1400px) rotateY(70deg); filter: brightness(.8); }
+  }
+  @keyframes pagina-entra-indietro {
+    from { transform: perspective(1400px) rotateY(-70deg); filter: brightness(.8); }
+    to { transform: none; filter: brightness(1); }
+  }
+  .book.pagina-esce-avanti { animation: pagina-esce-avanti .26s ease-in forwards; transform-origin: left center; }
+  .book.pagina-esce-avanti::after { animation: ombra-in .26s ease-in forwards; }
+  .book.pagina-entra-avanti { animation: pagina-entra-avanti .32s ease-out; transform-origin: left center; }
+  .book.pagina-entra-avanti::after { animation: ombra-out .32s ease-out forwards; }
+  .book.pagina-esce-indietro { animation: pagina-esce-indietro .26s ease-in forwards; transform-origin: right center; }
+  .book.pagina-esce-indietro::after { animation: ombra-in .26s ease-in forwards; }
+  .book.pagina-entra-indietro { animation: pagina-entra-indietro .32s ease-out; transform-origin: right center; }
+  .book.pagina-entra-indietro::after { animation: ombra-out .32s ease-out forwards; }
+  @media (prefers-reduced-motion: reduce) {
+    .book.pagina-esce-avanti, .book.pagina-entra-avanti,
+    .book.pagina-esce-indietro, .book.pagina-entra-indietro,
+    .book.pagina-esce-avanti::after, .book.pagina-entra-avanti::after,
+    .book.pagina-esce-indietro::after, .book.pagina-entra-indietro::after { animation: none; }
+  }
+
+  /* Settimana: giorni su due colonne come in un'agenda aperta, ogni giorno su una sua pagina */
+  .book.griglia #sinistra, .book.griglia #destra {
+    min-height: 0; padding: 0; background: none; box-shadow: none; border-radius: 0; background-image: none;
+  }
+  .book.griglia .blocco {
+    margin: 0 0 18px; padding: 64px 18px 14px; min-height: 240px; border-radius: 14px;
+    background-color: var(--paper); background-attachment: local;
+    background-image: repeating-linear-gradient(to bottom, transparent 0 31px, var(--rule) 31px 32px);
+    box-shadow: 0 10px 22px rgba(20,50,90,.25);
+  }
+
+  /* Telefono: una pagina sotto l'altra, linguette in riga */
+  @media (max-width: 720px) {
+    .book { grid-template-columns: 1fr; padding: 0 14px; }
+    .dorso { display: none; }
+    .page { min-height: 0; padding-top: 58px; }
+    .tab.sx, .tab.dx { top: 10px; left: 14px; right: auto; width: auto; flex-direction: row; gap: 6px; padding: 4px 10px; border-radius: 8px; }
+    .tab span { font-size: .8rem; }
+    .tab b { font-size: 1rem; }
+    .blocco { margin-bottom: 20px; }
+  }
+
+  .fab {
+    position: fixed; right: 18px; bottom: 60px; z-index: 4;
+    width: 58px; height: 58px; border-radius: 50%; border: 0;
+    background: var(--tab-on); color: #fff; font-family: var(--body); font-size: 2rem; line-height: 1;
+    box-shadow: 0 6px 16px rgba(20,30,60,.35); cursor: pointer;
+  }
+  footer {
+    position: fixed; bottom: 0; left: 0; right: 0; z-index: 3;
+    background: var(--barra); box-shadow: 0 -2px 10px rgba(20,50,90,.2);
+    display: flex; flex-wrap: wrap; justify-content: center; align-items: center; gap: 8px 14px; padding: 6px;
+  }
+  footer button {
+    font-family: var(--body); font-size: .8rem; background: none; border: 0; color: var(--accent);
+    cursor: pointer; padding: 8px 10px; border-radius: 6px;
+  }
+
+  dialog {
+    width: min(92vw, 480px); border: 0; border-radius: 14px; padding: 0;
+    background: var(--paper); color: var(--ink); box-shadow: 0 16px 40px rgba(0,0,0,.35);
+  }
+  dialog::backdrop { background: rgba(20,30,50,.45); }
+  form { padding: 18px 22px 22px; display: grid; gap: 14px; }
+  form h2 {
+    margin: 0; font-family: var(--display); font-style: italic; font-weight: 600; font-size: 1.4rem;
+    color: var(--accent); border-bottom: 1px solid var(--edge); padding-bottom: 6px;
+  }
+  label { display: grid; gap: 4px; font-size: .85rem; color: var(--muted); }
+  input, textarea {
+    font-family: var(--body); font-size: 1.05rem; color: var(--ink); background: transparent;
+    border: 0; border-bottom: 1px solid var(--muted); border-radius: 0; padding: 6px 2px; width: 100%;
+  }
+  input:focus, textarea:focus { outline: none; border-bottom: 2px solid var(--accent); }
+  textarea { resize: vertical; }
+  .row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  fieldset { border: 0; padding: 0; margin: 0; display: grid; gap: 6px; }
+  legend { font-size: .85rem; color: var(--muted); margin-bottom: 6px; }
+  .prios { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+  .prio {
+    display: flex; align-items: center; justify-content: center; gap: 6px; cursor: pointer;
+    border: 1.5px solid var(--edge); border-radius: 8px; padding: 8px; color: var(--ink); font-size: .95rem;
+  }
+  .prio input { width: auto; margin: 0; border: 0; padding: 0; }
+  .prio.alta:has(input:checked)  { border-color: var(--alta, #ff6b6b); background: var(--hl-alta); }
+  .prio.media:has(input:checked) { border-color: #e0b400; background: var(--hl-media); }
+  .prio.bassa:has(input:checked) { border-color: #3fae5a; background: var(--hl-bassa); }
+  .actions { display: flex; gap: 8px; justify-content: flex-end; align-items: center; }
+  .actions .spacer { flex: 1; }
+  .actions button {
+    font-family: var(--body); font-size: .9rem; padding: 8px 16px; border-radius: 8px;
+    border: 1px solid var(--edge); background: var(--card, #fff); color: var(--ink); cursor: pointer;
+  }
+  .actions .primary { background: var(--accent); color: #fff; border-color: var(--accent); }
+  .actions .danger { color: #d33; border-color: #d33; }
+  [hidden] { display: none !important; }
+</style>
+</head>
+<body>
+
+<header class="top">
+  <button class="icon-btn" id="prev" aria-label="Indietro">‹</button>
+  <div class="centro">
+    <div id="dateLabel"></div>
+    <input type="date" id="datePicker" aria-label="Scegli una data">
+    <nav class="vistas">
+      <button class="link" id="today">Oggi</button>
+      <button class="link vista" data-vista="giorno">Giorno</button>
+      <button class="link vista" data-vista="doppia">Due pagine</button>
+      <button class="link vista" data-vista="settimana">Settimana</button>
+    </nav>
+  </div>
+  <button class="icon-btn" id="next" aria-label="Avanti">›</button>
+</header>
+
+<div id="summary"></div>
+
+<main class="book" id="book">
+  <section class="page" id="sinistra"></section>
+  <div class="dorso" aria-hidden="true"></div>
+  <section class="page" id="destra"></section>
+</main>
+
+<button class="fab" id="add" aria-label="Nuovo impegno">+</button>
+
+<footer>
+  <button id="exportBtn">Esporta dati</button>
+  <button id="importBtn">Importa dati</button>
+  <button id="meno" aria-label="Rimpicciolisci testo">A-</button>
+  <button id="piu" aria-label="Ingrandisci testo">A+</button>
+  <select id="tema" aria-label="Scegli l'agenda">
+    <option value="cisl">Cisl Fp</option>
+    <option value="casa">Casa e Scuola</option>
+    <option value="borsa">Borsa Italiana</option>
+    <option value="astronomia">Tempo Libero</option>
+  </select>
+  <input type="file" id="importFile" accept="application/json" hidden>
+</footer>
+
+<dialog id="dlg">
+  <form id="form">
+    <h2 id="dlgTitle">Nuovo impegno</h2>
+    <label>Cosa devi fare
+      <input name="titolo" required maxlength="120" autocomplete="off">
+    </label>
+    <div class="row">
+      <label>Data
+        <input type="date" name="data" required>
+      </label>
+      <label>Ora
+        <input type="time" name="ora">
+      </label>
+    </div>
+    <fieldset>
+      <legend>Priorità</legend>
+      <div class="prios">
+        <label class="prio alta"><input type="radio" name="priorita" value="alta">Alta</label>
+        <label class="prio media"><input type="radio" name="priorita" value="media" checked>Media</label>
+        <label class="prio bassa"><input type="radio" name="priorita" value="bassa">Bassa</label>
+      </div>
+    </fieldset>
+    <fieldset>
+      <legend>Colore evidenziatore</legend>
+      <div class="colori">
+        <label class="colore"><input type="radio" name="colore" value="" checked>Come priorità</label>
+        <label class="colore"><input type="radio" name="colore" value="verde"><i class="sw-verde"></i>Verde</label>
+        <label class="colore"><input type="radio" name="colore" value="blu"><i class="sw-blu"></i>Blu</label>
+        <label class="colore"><input type="radio" name="colore" value="arancione"><i class="sw-arancione"></i>Arancione</label>
+        <label class="colore"><input type="radio" name="colore" value="rosso"><i class="sw-rosso"></i>Rosso</label>
+      </div>
+    </fieldset>
+    <label>Note
+      <textarea name="note" rows="3"></textarea>
+    </label>
+    <div class="actions">
+      <button type="button" class="danger" id="del" hidden>Elimina</button>
+      <span class="spacer"></span>
+      <button type="button" id="cancel">Annulla</button>
+      <button type="submit" class="primary">Salva</button>
+    </div>
+  </form>
+</dialog>
+
+<script>
+const KEY = 'agenda.v1';
+const PRIORITA = { alta: 'Alta', media: 'Media', bassa: 'Bassa' };
+const ORDINE = { alta: 0, media: 1, bassa: 2 };
+const GIORNI_BREVI = ['Dom', 'Lun', 'Mar', 'Mer', 'Gio', 'Ven', 'Sab'];
+
+const $ = id => document.getElementById(id);
+const book = $('book'), sinistra = $('sinistra'), destra = $('destra'), summary = $('summary');
+const dlg = $('dlg'), form = $('form'), del = $('del');
+const datePicker = $('datePicker');
+
+let impegni = carica();
+let giorno = toISO(new Date());
+let editId = null;
+let vista = 'giorno';
+let inGirata = false;
+
+function toISO(d) {
+  return [d.getFullYear(), String(d.getMonth() + 1).padStart(2, '0'), String(d.getDate()).padStart(2, '0')].join('-');
+}
+function parseISO(iso) {
+  const [y, m, d] = iso.split('-').map(Number);
+  return new Date(y, m - 1, d);
+}
+function sposta(iso, giorni) {
+  const d = parseISO(iso);
+  d.setDate(d.getDate() + giorni);
+  return toISO(d);
+}
+function inizioSettimana(iso) {
+  const d = parseISO(iso);
+  d.setDate(d.getDate() - ((d.getDay() + 6) % 7));
+  return toISO(d);
+}
+function nuovoId() {
+  return Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
+}
+
+function carica() {
+  try { return JSON.parse(localStorage.getItem(KEY)) || []; } catch { return []; }
+}
+function salva() {
+  try {
+    localStorage.setItem(KEY, JSON.stringify(impegni));
+  } catch {
+    alert('Impossibile salvare su questo dispositivo (spazio o permessi del browser).');
+  }
+}
+
+function ordina(a, b) {
+  // Fatti in fondo; poi senza ora in cima, poi in ordine cronologico.
+  if (a.done !== b.done) return a.done ? 1 : -1;
+  if (!a.ora !== !b.ora) return a.ora ? 1 : -1;
+  if (a.ora !== b.ora) return a.ora.localeCompare(b.ora);
+  return ORDINE[a.priorita] - ORDINE[b.priorita];
+}
+
+// Un giorno sulla pagina, con la sua linguetta sul bordo.
+function blocco(iso, lato) {
+  const d = parseISO(iso);
+  const etichetta = d.toLocaleDateString('it-IT', { weekday: 'long', day: 'numeric', month: 'long' });
+
+  const sezione = document.createElement('section');
+  sezione.className = 'blocco';
+
+  const linguetta = document.createElement('button');
+  linguetta.className = `tab ${lato}${iso === giorno ? ' attiva' : ''}`;
+  linguetta.setAttribute('aria-label', `Vai a ${etichetta}`);
+  const nomeGiorno = document.createElement('span');
+  nomeGiorno.textContent = GIORNI_BREVI[d.getDay()];
+  const numero = document.createElement('b');
+  numero.textContent = d.getDate();
+  linguetta.append(nomeGiorno, numero);
+  linguetta.onclick = () => { giorno = iso; render(); };
+
+  const intest = document.createElement('h3');
+  intest.className = 'intest';
+  intest.textContent = etichetta;
+  intest.onclick = () => { giorno = iso; vista = 'giorno'; render(); };
+
+  const righe = document.createElement('ul');
+  righe.className = 'righe';
+  righe.append(...impegni.filter(i => i.data === iso).sort(ordina).map(carta));
+
+  sezione.append(linguetta, intest, righe);
+  return sezione;
+}
+
+function render() {
+  datePicker.value = giorno;
+  document.querySelectorAll('.vista').forEach(b => b.classList.toggle('on', b.dataset.vista === vista));
+  book.classList.toggle('singola', vista === 'giorno');
+  book.classList.toggle('griglia', vista === 'settimana');
+
+  if (vista === 'settimana') {
+    const lunedi = inizioSettimana(giorno);
+    const giorni = Array.from({ length: 7 }, (_, n) => sposta(lunedi, n));
+    const breve = { day: 'numeric', month: 'short' };
+    $('dateLabel').textContent = `${parseISO(giorni[0]).toLocaleDateString('it-IT', breve)} – ${parseISO(giorni[6]).toLocaleDateString('it-IT', breve)}`;
+    sinistra.replaceChildren(...giorni.filter((_, n) => n % 2 === 0).map(iso => blocco(iso, 'sx')));
+    destra.replaceChildren(...giorni.filter((_, n) => n % 2 === 1).map(iso => blocco(iso, 'dx')));
+    const totale = giorni.reduce((n, iso) => n + impegni.filter(i => i.data === iso).length, 0);
+    summary.textContent = totale ? `${totale} impegni in settimana` : '';
+    return;
+  }
+
+  if (vista === 'doppia') {
+    const successivo = sposta(giorno, 1);
+    const lunga = { day: 'numeric', month: 'long', year: 'numeric' };
+    $('dateLabel').textContent = `${parseISO(giorno).toLocaleDateString('it-IT', lunga)} – ${parseISO(successivo).toLocaleDateString('it-IT', lunga)}`;
+    sinistra.replaceChildren(blocco(giorno, 'sx'));
+    destra.replaceChildren(blocco(successivo, 'dx'));
+    const totale = impegni.filter(i => i.data === giorno || i.data === successivo).length;
+    summary.textContent = totale ? `${totale} impegni nelle due pagine` : '';
+    return;
+  }
+
+  $('dateLabel').textContent = parseISO(giorno).toLocaleDateString('it-IT', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
+  sinistra.replaceChildren(blocco(giorno, 'sx'));
+  destra.replaceChildren();
+  const oggi = impegni.filter(i => i.data === giorno);
+  const fatti = oggi.filter(i => i.done).length;
+  summary.textContent = oggi.length ? `${oggi.length - fatti} da fare · ${fatti} ${fatti === 1 ? 'fatto' : 'fatti'}` : '';
+}
+
+function carta(it) {
+  const li = document.createElement('li');
+  li.className = `riga p-${it.priorita}${it.done ? ' done' : ''}${it.colore ? ` hl-${it.colore}` : ''}`;
+
+  const check = document.createElement('button');
+  check.className = 'check';
+  check.setAttribute('role', 'checkbox');
+  check.setAttribute('aria-checked', String(it.done));
+  check.setAttribute('aria-label', it.done ? 'Riapri impegno' : 'Segna come fatto');
+  check.textContent = it.done ? '✔' : '';
+  check.onclick = () => {
+    it.done = !it.done;
+    it.updatedAt = Date.now();
+    salva(); render();
+  };
+
+  const testo = document.createElement('div');
+  testo.className = 'main';
+  testo.tabIndex = 0;
+  testo.onclick = () => apriForm(it);
+
+  const titolo = document.createElement('span');
+  titolo.className = 'evidenzia';
+  titolo.textContent = it.titolo;
+
+  const meta = document.createElement('div');
+  meta.className = 'meta';
+  meta.textContent = [it.ora, PRIORITA[it.priorita]].filter(Boolean).join(' · ');
+
+  testo.append(titolo, meta);
+  if (it.note) {
+    const note = document.createElement('div');
+    note.className = 'note';
+    note.textContent = it.note;
+    testo.append(note);
+  }
+
+  li.append(check, testo);
+  return li;
+}
+
+function apriForm(it) {
+  editId = it ? it.id : null;
+  $('dlgTitle').textContent = it ? 'Modifica impegno' : 'Nuovo impegno';
+  form.reset();
+  const f = form.elements;
+  f.titolo.value = it ? it.titolo : '';
+  f.data.value = it ? it.data : giorno;
+  f.ora.value = it ? it.ora : '';
+  f.note.value = it ? it.note : '';
+  f.priorita.value = it ? it.priorita : 'media';
+  f.colore.value = it && it.colore ? it.colore : '';
+  del.hidden = !it;
+  dlg.showModal();
+  f.titolo.focus();
+}
+
+form.addEventListener('submit', e => {
+  e.preventDefault();
+  const f = form.elements;
+  const valori = {
+    titolo: f.titolo.value.trim(),
+    data: f.data.value,
+    ora: f.ora.value,
+    priorita: f.priorita.value,
+    note: f.note.value.trim(),
+    colore: f.colore.value || null,
+    updatedAt: Date.now(),
+  };
+  if (!valori.titolo || !valori.data) return;
+
+  if (editId) {
+    Object.assign(impegni.find(i => i.id === editId), valori);
+  } else {
+    impegni.push({ id: nuovoId(), done: false, ...valori });
+  }
+  giorno = valori.data;
+  salva();
+  dlg.close();
+  render();
+});
+
+del.onclick = () => {
+  if (!editId || !confirm('Eliminare questo impegno?')) return;
+  impegni = impegni.filter(i => i.id !== editId);
+  salva();
+  dlg.close();
+  render();
+};
+
+const passo = () => ({ giorno: 1, doppia: 2, settimana: 7 })[vista];
+
+function cambiaGiorno(verso) {
+  giorno = sposta(giorno, verso * passo());
+  render();
+}
+// Girata di pagina: il libro si piega, poi compare la pagina successiva.
+function gira(verso) {
+  if (inGirata) return;
+  if (matchMedia('(prefers-reduced-motion: reduce)').matches) return cambiaGiorno(verso);
+  inGirata = true;
+  const [esce, entra] = verso > 0
+    ? ['pagina-esce-avanti', 'pagina-entra-avanti']
+    : ['pagina-esce-indietro', 'pagina-entra-indietro'];
+  // Durate uguali a quelle in CSS: 260 ms per la piega, 320 ms per l'arrivo.
+  book.classList.add(esce);
+  setTimeout(() => {
+    book.classList.remove(esce);
+    cambiaGiorno(verso);
+    book.classList.add(entra);
+    setTimeout(() => {
+      book.classList.remove(entra);
+      inGirata = false;
+    }, 320);
+  }, 260);
+}
+
+// Swipe orizzontale sul libro: trascina a sinistra per il giorno dopo, a destra per il precedente.
+let tocco = null;
+book.addEventListener('touchstart', e => {
+  tocco = { x: e.touches[0].clientX, y: e.touches[0].clientY };
+}, { passive: true });
+book.addEventListener('touchend', e => {
+  if (!tocco) return;
+  const dx = e.changedTouches[0].clientX - tocco.x;
+  const dy = e.changedTouches[0].clientY - tocco.y;
+  tocco = null;
+  if (Math.abs(dx) > 60 && Math.abs(dx) > Math.abs(dy) * 1.5) gira(dx < 0 ? 1 : -1);
+});
+
+// Dimensione del testo: scala tutta l'agenda (righe comprese) e ricorda la scelta su questo dispositivo.
+const SCALE = [0.85, 1, 1.15, 1.3, 1.5];
+let livelloTesto = 1;
+try {
+  const salvato = localStorage.getItem('agenda.testo');
+  if (salvato !== null) livelloTesto = Math.min(SCALE.length - 1, Math.max(0, Number(salvato) || 0));
+} catch { livelloTesto = 1; }
+function cambiaTesto(passo) {
+  livelloTesto = Math.min(SCALE.length - 1, Math.max(0, livelloTesto + passo));
+  document.body.style.zoom = SCALE[livelloTesto];
+  try { localStorage.setItem('agenda.testo', String(livelloTesto)); } catch {}
+}
+$('meno').onclick = () => cambiaTesto(-1);
+$('piu').onclick = () => cambiaTesto(1);
+cambiaTesto(0);
+
+// Tema: ogni tema cambia colori, sfondo e pagine. La scelta resta su questo dispositivo.
+function applicaTema(nome) {
+  document.documentElement.dataset.tema = nome;
+  $('tema').value = nome;
+  try { localStorage.setItem('agenda.tema', nome); } catch {}
+}
+const AGENDE = ['cisl', 'casa', 'borsa', 'astronomia'];
+let temaSalvato = 'cisl';
+try { temaSalvato = localStorage.getItem('agenda.tema') || 'cisl'; } catch {}
+if (!AGENDE.includes(temaSalvato)) temaSalvato = 'cisl';
+applicaTema(temaSalvato);
+$('tema').onchange = e => applicaTema(e.target.value);
+
+$('cancel').onclick = () => dlg.close();
+$('add').onclick = () => apriForm(null);
+$('prev').onclick = () => gira(-1);
+$('next').onclick = () => gira(1);
+$('today').onclick = () => { giorno = toISO(new Date()); render(); };
+document.querySelectorAll('.vista').forEach(b => b.onclick = () => { vista = b.dataset.vista; render(); });
+datePicker.onchange = () => {
+  if (datePicker.value) { giorno = datePicker.value; render(); }
+};
+
+$('exportBtn').onclick = () => {
+  const blob = new Blob([JSON.stringify({ versione: 1, impegni }, null, 2)], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `agenda-${toISO(new Date())}.json`;
+  a.click();
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+};
+
+$('importBtn').onclick = () => $('importFile').click();
+$('importFile').onchange = async e => {
+  const file = e.target.files[0];
+  e.target.value = '';
+  if (!file) return;
+  try {
+    const dati = JSON.parse(await file.text());
+    const arrivo = Array.isArray(dati) ? dati : dati.impegni;
+    if (!Array.isArray(arrivo)) throw new Error('formato');
+    // Unisce per id: vince la versione modificata più di recente.
+    const mappa = new Map(impegni.map(i => [i.id, i]));
+    let nuovi = 0;
+    for (const it of arrivo) {
+      if (!it || !it.id) continue;
+      const vecchio = mappa.get(it.id);
+      if (!vecchio) { mappa.set(it.id, it); nuovi++; }
+      else if ((it.updatedAt || 0) > (vecchio.updatedAt || 0)) mappa.set(it.id, it);
+    }
+    impegni = [...mappa.values()];
+    salva(); render();
+    alert(`Importazione completata: ${nuovi} nuovi impegni aggiunti.`);
+  } catch {
+    alert('File non valido.');
+  }
+};
+
+if ('serviceWorker' in navigator && location.protocol.startsWith('http')) {
+  navigator.serviceWorker.register('sw.js');
+}
+
+render();
+</script>
+</body>
+</html>
